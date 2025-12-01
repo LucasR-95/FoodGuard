@@ -22,10 +22,10 @@
             <span class="sidebar-icon">🗺️</span>
             Mapa
         </div>
-        <div class="sidebar-item" onclick="alert('Funcionalidade em desenvolvimento...')">
-            <span class="sidebar-icon">❓</span>
-            Ajuda
-        </div>
+        <div class="sidebar-item" onclick="openHelp()">
+    <span class="sidebar-icon">❓</span>
+    Ajuda
+</div>
     </div>
     
     <header>
@@ -81,5 +81,39 @@
 
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="script.js"></script>
+
+    <div id="helpModal" class="modal-overlay escondido" onclick="closeHelp(event)">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeHelp(event)">&times;</span>
+        <h2>📖 Como usar o Food Guard</h2>
+        
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-text">
+                <strong>Defina suas restrições</strong>
+                <p>Marque as caixas (ex: Glúten, Leite) para informar o que você não pode comer.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-text">
+                <strong>Escaneie ou Digite</strong>
+                <p>Clique em "Ativar Câmera" para ler o código de barras ou digite os números manualmente.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-text">
+                <strong>Analise o Resultado</strong>
+                <p><span style="color:#1f4d2c; font-weight:bold;">Verde:</span> Seguro para você.<br>
+                <span style="color:#cc4444; font-weight:bold;">Vermelho:</span> Contém ingredientes perigosos.</p>
+            </div>
+        </div>
+
+        <button onclick="closeHelp(event)">Entendi!</button>
+    </div>
+</div>
 </body>
 </html>
