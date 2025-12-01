@@ -259,3 +259,90 @@ button#cam-btn.active {
     0% { opacity: 1; }
     100% { opacity: 0; visibility: hidden; }
 }
+
+/* --- JANELA MODAL (AJUDA) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Fundo escuro transparente */
+    z-index: 2000; /* Fica acima de tudo, inclusive da sidebar */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(3px); /* Efeito de desfoque no fundo */
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    position: relative;
+    text-align: left;
+    border-top: 10px solid var(--color-primary);
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 30px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: var(--color-primary);
+}
+
+.modal-content h2 {
+    color: var(--color-primary);
+    margin-top: 0;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+/* Estilo dos Passos */
+.step {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.step-number {
+    background-color: var(--color-secondary);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.step-text strong {
+    color: var(--color-primary);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.step-text p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #555;
+    line-height: 1.4;
+}
