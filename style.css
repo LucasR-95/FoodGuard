@@ -346,3 +346,22 @@ button#cam-btn.active {
     color: #555;
     line-height: 1.4;
 }
+
+/* --- RESPONSIVIDADE PARA MOBILE --- */
+@media (max-width: 768px) {
+    body {
+        /* Explicação: 50% é o centro da tela. 
+           Adicionamos 30px (metade dos 60px do menu lateral) 
+           para alinhar a imagem com o centro do CONTEÚDO.
+        */
+        background-position: calc(50% + 30px) top; 
+        
+        /* Opcional: Reduzir um pouco a imagem no celular para caber melhor */
+        background-size: auto 250px; 
+    }
+    
+    header {
+        /* Ajusta a altura no mobile para o conteúdo subir um pouco */
+        margin-top: 220px; 
+    }
+}
