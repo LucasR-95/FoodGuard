@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Guard - O Guarda da Sua Alimentação</title>
+    <link rel="stylesheet" href="style.css"> 
+    <link rel="icon" type="image/jpg" href="img/food.jpg"> 
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="sidebar-item" onclick="scrollToTop()">
+            <span class="sidebar-icon">🏠</span>
+            Início
+        </div>
+        <div class="sidebar-item" onclick="showRestrictions()">
+            <span class="sidebar-icon">⚠️</span>
+            Filtros
+        </div>
+        <div class="sidebar-item" onclick="openMapsSearch()">
+            <span class="sidebar-icon">🗺️</span>
+            Mapa
+        </div>
+        <div class="sidebar-item" onclick="alert('Funcionalidade em desenvolvimento...')">
+            <span class="sidebar-icon">❓</span>
+            Ajuda
+        </div>
+    </div>
+    
+    <header>
+    </header> 
+
+    <main>
+        <div class="scanner-box" id="scannerBox">
+            <h2>Minhas Restrições ⚠️</h2>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="allergy" value="sugar"> Açúcar</label>
+                <label><input type="checkbox" name="allergy" value="peanut"> Amendoim</label>
+                <label><input type="checkbox" name="allergy" value="seafood"> Frutos do Mar</label>
+                <label><input type="checkbox" name="allergy" value="gluten"> Glúten</label>
+                <label><input type="checkbox" name="allergy" value="milk"> Leite/Lactose</label>
+                <label><input type="checkbox" name="allergy" value="mustard"> Mostarda</label>
+                <label><input type="checkbox" name="allergy" value="nuts"> Nozes</label>
+                <label><input type="checkbox" name="allergy" value="egg"> Ovo</label>
+                <label><input type="checkbox" name="allergy" value="soy"> Soja</label>
+            </div>
+            
+            <hr class="separator">
+
+            <h2>Escanear ou Digitar Código</h2>
+            
+            <div id="reader-container">
+                <div id="reader" class="escondido"></div>
+                <button id="cam-btn" onclick="toggleCamera()">📷 Ativar Câmera</button>
+            </div>
+            
+            <p class="small-text">ou</p>
+            
+            <input type="number" id="manual-code" placeholder="Digite o código de barras (EAN/GTIN)">
+            <button onclick="manualSearch()">🔍 Analisar Código</button>
+
+            <div id="result-section" class="resultado escondido">
+                <h3 id="product-name"></h3>
+                
+                <div id="result" class="result-box">
+                    <p id="mensagem"></p>
+                    <img id="iconeAvaliacao" class="icone">
+                </div>
+                
+                <div id="suggestions" class="escondido">
+                </div>
+            </div>
+            
+        </div>
+        <!-- SPLASH SCREEN -->
+    <div id="splash">
+        <img src="img/food.jpg" id="splash-logo">
+    </div>
+    </main>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="script.js"></script>
+</body>
+</html>
