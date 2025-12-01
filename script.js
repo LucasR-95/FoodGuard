@@ -298,3 +298,28 @@ window.addEventListener("load", () => {
         document.getElementById("splash").style.display = "none";
     }, 3000);
 });
+
+/* -----------------------------------------------
+   ❓ SISTEMA DE AJUDA (MODAL)
+--------------------------------------------------*/
+function openHelp() {
+    const modal = document.getElementById("helpModal");
+    modal.classList.remove("escondido");
+}
+
+function closeHelp(event) {
+    // Fecha se clicar no botão X, no botão "Entendi" ou fora da caixa branca
+    if (event.target.id === "helpModal" || 
+        event.target.className === "close-btn" || 
+        event.target.innerText === "Entendi!") {
+        
+        document.getElementById("helpModal").classList.add("escondido");
+    }
+}
+
+// Fecha o modal se o usuário apertar a tecla ESC
+document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") {
+        document.getElementById("helpModal").classList.add("escondido");
+    }
+});
