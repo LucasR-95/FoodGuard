@@ -24,17 +24,16 @@ const conditionMap = {
 
 // PALAVRAS-CHAVE para buscar nos rótulos
 const keywords = {
-    gluten: ["trigo", "farinha de trigo", "cevada", "centeio", "malte", "espelta", "wheat", "barley", "rye", "malt"],
-    milk: ["leite", "queijo", "soro de leite", "caseina", "whey", "creme de leite", "milk", "cheese", "cream", "lactose"],
+    gluten: ["trigo", "farinha de trigo", "cevada", "centeio", "malte", "espelta", "wheat", "barley", "rye", "malt", "gluten", "en:gluten"],
+    milk: ["leite", "queijo", "soro de leite", "caseina", "whey", "creme de leite", "milk", "cheese", "cream", "lactose", "dairy", "en:milk"],
     sugar: ["açúcar", "glicose", "xarope", "frutose", "maltose", "sacarose", "mel", "sugar", "glucose", "syrup", "fructose", "sucrose", "honey", "dextrose", "maltodextrina"],
     sodium: ["sal", "sódio", "cloreto de sódio", "bicarbonato de sódio", "glutamato monossódico", "salt", "sodium", "monosodium"],
-    seafood: ["camarão", "peixe", "siri", "marisco", "ostra", "atum", "tilapia", "shrimp", "fish", "crab", "shellfish"],
-    egg: ["ovo", "gema", "clara", "albumina", "egg"],
-    peanut: ["amendoim", "peanut"],
-    nuts: ["nut", "nuts", "noz", "nozes", "castanha", "nozes", "avelã", "amêndoa", "macadâmia", "pistache", "chestnut", "walnuts", "hazelnut", "almond", "macadamia", "pistachio"],
+    seafood: ["camarão", "peixe", "siri", "marisco", "ostra", "atum", "tilapia", "shrimp", "fish", "crab", "shellfish", "crustaceans", "molluscs"],
+    egg: ["ovo", "gema", "clara", "albumina", "egg", "eggs"],
+    peanut: ["amendoim", "peanut", "peanuts"],
+    nuts: ["nut", "nuts", "noz", "nozes", "castanha", "avelã", "amêndoa", "macadâmia", "pistache", "chestnut", "walnuts", "hazelnut", "almond", "macadamia", "pistachio", "cashew"],
     soy: ["soja", "soy", "isolado de soja", "proteína de soja", "farinha de soja", "soy isolate", "soy protein", "soy flour", "soybeans"],
     mustard: ["mustard", "mostarda"],
-
 };
 
 // SUGESTÕES DE SUBSTITUIÇÃO
@@ -163,35 +162,58 @@ async function fetchProductData(barcode) {
 }
 
 function checkIngredients(product, badIngredients) {
+    // 1. Preparar Texto dos Ingredientes (Método Antigo)
     const ingredientsText = (
         product.ingredients_text_pt || 
         product.ingredients_text || 
         ""
     ).toLowerCase();
 
-    // Se não tiver lista de ingredientes, avisar
-    if (ingredientsText.length < 3) {
+    // 2. Preparar Tags da API (Novo Método - Banco de Dados)
+    // O API retorna algo como ["en:milk", "pt:trigo"]. Vamos limpar para ["milk", "trigo"]
+    // Combina Alérgenos confirmados + Traços (Pode conter)
+const apiAllergens = [...(product.allergens_tags || []), ...(product.traces_tags || [])]
+.map(tag => tag.replace(/en:|pt:|fr:/g, "").toLowerCase());
+
+    // Se não tiver info em lugar nenhum, avisa (mas tenta validar o que tiver)
+    if (ingredientsText.length < 3 && apiAllergens.length === 0) {
         showInsufficientData();
         return;
     }
 
     let detectedRisks = [];
 
-    // Verificar cada ingrediente "proibido"
+    // Verificar cada ingrediente "proibido" selecionado pelo usuário
     badIngredients.forEach(riskItem => {
         const riskLower = riskItem.toLowerCase();
         let found = false;
 
-        // Verifica na lista de palavras-chave
+        // SE TIVER PALAVRAS-CHAVE REGISTRADAS PARA ESSE RISCO
         if (keywords[riskLower]) {
             keywords[riskLower].forEach(word => {
-                // Regex para buscar palavra exata ou parcial segura
-                if (ingredientsText.includes(word)) found = true;
+                const wordClean = word.toLowerCase();
+
+                // A) Verifica no TEXTO corrido de ingredientes
+                if (ingredientsText.includes(wordClean)) {
+                    found = true;
+                    // Console log para depuração (opcional)
+                    console.log(`Perigo encontrado no texto: ${wordClean}`);
+                }
+
+                // B) Verifica nas TAGS da API (Banco de Dados)
+                // Verifica se alguma tag da API contém a palavra chave
+                if (apiAllergens.some(tag => tag.includes(wordClean))) {
+                    found = true;
+                    console.log(`Perigo encontrado na API: ${wordClean} (Tag: ${apiAllergens})`);
+                }
             });
         }
 
         if (found) detectedRisks.push(riskItem.toUpperCase());
     });
+
+    // Remover duplicatas nos resultados encontrados
+    detectedRisks = [...new Set(detectedRisks)];
 
     if (detectedRisks.length > 0) {
         showUnsafeResult(detectedRisks);
@@ -211,7 +233,7 @@ function showUnsafeResult(detected) {
     // Traduzir termos técnicos para português na exibição
     const translationDisplay = {
         'SUGAR': 'AÇÚCAR', 'SODIUM': 'SÓDIO/SAL', 'GLUTEN': 'GLÚTEN', 
-        'MILK': 'LEITE', 'MEAT': 'CARNE', 'EGG': 'OVO', 'HONEY': 'MEL'
+        'MILK': 'LEITE', 'EGG': 'OVO', 'PEANUT': 'AMENDOIM', 'NUTS': 'NOZES', 'SOY': 'SOJA', 'MUSTARD': 'MOSTARDA', 'SEAFOOD': 'FRUTOS DO MAR',
     };
     
     const displayNames = detected.map(d => translationDisplay[d] || d).join(", ");
