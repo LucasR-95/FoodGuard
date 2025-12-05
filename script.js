@@ -14,7 +14,7 @@ const conditionMap = {
     hypertension: ['sodium'],     // Hipertensos evitam sal/sódio
     celiac: ['gluten'],           // Celíacos evitam glúten
     lactose: ['milk'],            // Intolerantes evitam leite
-    egg_allergy: ["ovo", "gema", "clara", "albumina", "ovalbumina"],
+    egg_allergy: ['egg', 'eggs', 'ovo', 'ovos', 'gema', 'clara', 'albumina', 'ovalbumina'],
     peanut_allergy: ['peanut'],
     seafood_allergy: ['seafood'],
     nuts_allergy: ['nuts'],
@@ -29,7 +29,7 @@ const keywords = {
     sugar: ["açúcar", "glicose", "xarope", "frutose", "maltose", "sacarose", "mel", "sugar", "glucose", "syrup", "fructose", "sucrose", "honey", "dextrose", "maltodextrina"],
     sodium: ["sal", "sódio", "cloreto de sódio", "bicarbonato de sódio", "glutamato monossódico", "salt", "sodium", "monosodium"],
     seafood: ["camarão", "peixe", "siri", "marisco", "ostra", "atum", "tilapia", "shrimp", "fish", "crab", "shellfish", "crustaceans", "molluscs"],
-    egg: ["ovo", "gema", "clara", "albumina", "egg", "eggs"],
+    egg: ["ovo", "ovos", "gema", "clara", "albumina", "egg", "eggs"],
     peanut: ["amendoim", "peanut", "peanuts"],
     nuts: ["nut", "nuts", "noz", "nozes", "castanha", "avelã", "amêndoa", "macadâmia", "pistache", "chestnut", "walnuts", "hazelnut", "almond", "macadamia", "pistachio", "cashew"],
     soy: ["soja", "soy", "isolado de soja", "proteína de soja", "farinha de soja", "soy isolate", "soy protein", "soy flour", "soybeans"],
