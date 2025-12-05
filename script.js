@@ -1,151 +1,292 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Guard - Saúde</title>
-    <link rel="stylesheet" href="style.css"> 
-    <link rel="icon" type="image/jpg" href="img/food.jpg"> 
-</head>
-<body>
+/****************************************************
+ * FOOD GUARD - Lógica de Saúde
+ ****************************************************/
 
-    <div id="sidebar">
-        <div class="sidebar-item" onclick="scrollToTop()">
-            <span class="sidebar-icon">🏠</span>
-            Início
-        </div>
-        <div class="sidebar-item" onclick="showRestrictions()">
-            <span class="sidebar-icon">⚠️</span>
-            Perfil
-        </div>
-        <div class="sidebar-item" onclick="openMapsSearch()">
-            <span class="sidebar-icon">🗺️</span>
-            Mapa
-        </div>
-        <div class="sidebar-item" onclick="openHelp()">
-            <span class="sidebar-icon">❓</span>
-            Ajuda
-        </div>
-    </div>
+// Controle da câmera
+let html5QrCode;
+let isScanning = false;
+
+/* --- 1. CONFIGURAÇÕES DE SAÚDE --- */
+
+// TRADUTOR: Doença -> Ingredientes a evitar
+const conditionMap = {
+    diabetes: ['sugar'],          // Diabéticos evitam açúcar
+    hypertension: ['sodium'],     // Hipertensos evitam sal/sódio
+    celiac: ['gluten'],           // Celíacos evitam glúten
+    lactose: ['milk'],            // Intolerantes evitam leite
+    egg_allergy: ["ovo", "gema", "clara", "albumina", "ovalbumina"],
+    peanut_allergy: ['peanut'],
+    seafood_allergy: ['seafood'],
+    nuts_allergy: ['nuts'],
+    soy_allergy: ['soy', 'soybeans'],
+    mustard_allergy: ['mustard'],
+};
+
+// PALAVRAS-CHAVE para buscar nos rótulos
+const keywords = {
+    gluten: ["trigo", "farinha de trigo", "cevada", "centeio", "malte", "espelta", "wheat", "barley", "rye", "malt"],
+    milk: ["leite", "queijo", "soro de leite", "caseina", "whey", "creme de leite", "milk", "cheese", "cream", "lactose"],
+    sugar: ["açúcar", "glicose", "xarope", "frutose", "maltose", "sacarose", "mel", "sugar", "glucose", "syrup", "fructose", "sucrose", "honey", "dextrose", "maltodextrina"],
+    sodium: ["sal", "sódio", "cloreto de sódio", "bicarbonato de sódio", "glutamato monossódico", "salt", "sodium", "monosodium"],
+    seafood: ["camarão", "peixe", "siri", "marisco", "ostra", "atum", "tilapia", "shrimp", "fish", "crab", "shellfish"],
+    egg: ["ovo", "gema", "clara", "albumina", "egg"],
+    peanut: ["amendoim", "peanut"],
+    nuts: ["nut", "nuts", "noz", "nozes", "castanha", "nozes", "avelã", "amêndoa", "macadâmia", "pistache", "chestnut", "walnuts", "hazelnut", "almond", "macadamia", "pistachio"],
+    soy: ["soja", "soy", "isolado de soja", "proteína de soja", "farinha de soja", "soy isolate", "soy protein", "soy flour", "soybeans"],
+    mustard: ["mustard", "mostarda"],
+
+};
+
+// SUGESTÕES DE SUBSTITUIÇÃO
+const specificProducts = {
+    milk: "leite vegetal ou zero lactose",
+    gluten: "alimentos sem glúten (arroz, milho)",
+    sugar: "produtos diet/zero açúcar",
+    sodium: "temperos naturais sem sal",
+    meat: "proteína de soja ou grão de bico",
+    egg: "substitutos para ovo",
+    peanut: "outras castanhas ou sementes",
+    nuts: "substitutos para nozes",
+    soy: "substitutos para soja",
+    mustard: "substitutos para mostarda",
+};
+
+/* --- 2. FUNÇÕES DA INTERFACE --- */
+
+function scrollToTop() { window.scrollTo({ top: 0, behavior: "smooth" }); }
+function showRestrictions() { 
+    const box = document.getElementById("scannerBox");
+    window.scrollTo({ top: box.offsetTop - 50, behavior: "smooth" }); 
+}
+function openMapsSearch() { window.open("https://www.google.com/maps/search/restaurantes+com+opções+sem+restrições+perto+de+mim", "_blank"); }
+function openHelp() { document.getElementById("helpModal").classList.remove("escondido"); }
+function closeHelp(e) {
+    if(e.target.id === "helpModal" || e.target.className === "close-btn" || e.target.innerText === "Entendi!") {
+        document.getElementById("helpModal").classList.add("escondido");
+    }
+}
+
+/* --- 3. CÂMERA --- */
+
+async function toggleCamera() {
+    const btn = document.getElementById("cam-btn");
+    const readerDiv = document.getElementById("reader");
+
+    if (isScanning) {
+        try { await html5QrCode.stop(); html5QrCode.clear(); } catch (err) {}
+        readerDiv.classList.add("escondido");
+        btn.innerText = "📷 Ativar Câmera";
+        btn.classList.remove("active");
+        isScanning = false;
+        return;
+    }
+
+    readerDiv.classList.remove("escondido");
+    btn.innerText = "⏳ Iniciando...";
+
+    if (typeof Html5Qrcode === "undefined") { alert("Erro: Biblioteca não carregada"); return; }
+    html5QrCode = new Html5Qrcode("reader");
+
+    try {
+        await html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSuccess);
+        btn.innerText = "⏹ Parar Câmera";
+        btn.classList.add("active");
+        isScanning = true;
+    } catch (err) {
+        alert("Erro na câmera. Use HTTPS.");
+        readerDiv.classList.add("escondido");
+        btn.innerText = "📷 Ativar Câmera";
+    }
+}
+
+function onScanSuccess(decodedText) {
+    document.getElementById("manual-code").value = decodedText;
+    fetchProductData(decodedText);
+    toggleCamera(); 
+}
+
+function manualSearch() {
+    const code = document.getElementById("manual-code").value.trim();
+    if (code.length < 3) return alert("Código inválido");
+    fetchProductData(code);
+}
+
+/* --- 4. LÓGICA PRINCIPAL (API + FILTRAGEM) --- */
+
+async function fetchProductData(barcode) {
+    const resultDiv = document.getElementById("result-section");
+    const nameDiv = document.getElementById("product-name");
+    const msg = document.getElementById("mensagem");
+
+    // 1. Identificar Condições Selecionadas
+    const selectedConditions = [...document.querySelectorAll('input[name="health_condition"]:checked')]
+        .map(cb => cb.value);
+
+    if (selectedConditions.length === 0) {
+        alert("⚠ Selecione pelo menos uma condição de saúde ou dieta.");
+        return;
+    }
+
+    // 2. Traduzir Condições para Ingredientes (A MÁGICA ACONTECE AQUI)
+    let ingredientsToAvoid = [];
+    selectedConditions.forEach(condition => {
+        if (conditionMap[condition]) {
+            ingredientsToAvoid.push(...conditionMap[condition]);
+        }
+    });
+    // Remove duplicatas
+    ingredientsToAvoid = [...new Set(ingredientsToAvoid)];
+
+    // Resetar UI
+    resultDiv.classList.remove("escondido");
+    nameDiv.innerText = "";
+    msg.innerText = "🔄 Analisando tabela nutricional...";
+    document.getElementById("iconeAvaliacao").src = "";
+    document.getElementById("suggestions").classList.add("escondido");
+    document.getElementById("result").className = "result-box";
+
+    try {
+        const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+        if (!response.ok) throw new Error("Erro API");
+        const data = await response.json();
+
+        if (data.status === 1) {
+            const product = data.product;
+            nameDiv.innerText = product.product_name || `Código: ${barcode}`;
+            checkIngredients(product, ingredientsToAvoid);
+        } else {
+            showProductNotFound();
+        }
+    } catch (err) {
+        showNetworkError();
+    }    
+}
+
+function checkIngredients(product, badIngredients) {
+    const ingredientsText = (
+        product.ingredients_text_pt || 
+        product.ingredients_text || 
+        ""
+    ).toLowerCase();
+
+    // Se não tiver lista de ingredientes, avisar
+    if (ingredientsText.length < 3) {
+        showInsufficientData();
+        return;
+    }
+
+    let detectedRisks = [];
+
+    // Verificar cada ingrediente "proibido"
+    badIngredients.forEach(riskItem => {
+        const riskLower = riskItem.toLowerCase();
+        let found = false;
+
+        // Verifica na lista de palavras-chave
+        if (keywords[riskLower]) {
+            keywords[riskLower].forEach(word => {
+                // Regex para buscar palavra exata ou parcial segura
+                if (ingredientsText.includes(word)) found = true;
+            });
+        }
+
+        if (found) detectedRisks.push(riskItem.toUpperCase());
+    });
+
+    if (detectedRisks.length > 0) {
+        showUnsafeResult(detectedRisks);
+    } else {
+        showSafeResult();
+    }
+}
+
+/* --- 5. EXIBIÇÃO DE RESULTADOS --- */
+
+function showUnsafeResult(detected) {
+    const result = document.getElementById("result");
+    const mensagem = document.getElementById("mensagem");
+    const icone = document.getElementById("iconeAvaliacao");
+    const suggestionsDiv = document.getElementById("suggestions");
+
+    // Traduzir termos técnicos para português na exibição
+    const translationDisplay = {
+        'SUGAR': 'AÇÚCAR', 'SODIUM': 'SÓDIO/SAL', 'GLUTEN': 'GLÚTEN', 
+        'MILK': 'LEITE', 'MEAT': 'CARNE', 'EGG': 'OVO', 'HONEY': 'MEL'
+    };
     
-    <header></header> 
+    const displayNames = detected.map(d => translationDisplay[d] || d).join(", ");
 
-    <main>
-        <div class="scanner-box" id="scannerBox">
-            <h2>Meu Perfil de Saúde 🩺</h2>
-            <p style="text-align:center; color:#666; font-size:0.9em; margin-bottom:15px;">Selecione suas condições:</p>
-            
-            <div class="checkbox-group">
-                <label><input type="checkbox" name="health_condition" value="diabetes"> Diabetes</label>
-                <label><input type="checkbox" name="health_condition" value="hypertension"> Hipertensão</label>
-                <label><input type="checkbox" name="health_condition" value="celiac"> Doença Celíaca</label>
-                <label><input type="checkbox" name="health_condition" value="lactose"> Intolerância à Lactose</label>
-                <label><input type="checkbox" name="health_condition" value="egg_allergy"> Alergia à Ovo</label>
-                <label><input type="checkbox" name="health_condition" value="peanut_allergy"> Alergia à Amendoim</label>
-                <label><input type="checkbox" name="health_condition" value="seafood_allergy"> Alergia à Frutos do Mar</label>
-                <label><input type="checkbox" name="health_condition" value="nuts_allergy"> Alergia à Nozes</label>
-                <label><input type="checkbox" name="health_condition" value="soy_allergy"> Alergia à Soja</label>
-                <label><input type="checkbox" name="health_condition" value="mustard_allergy"> Alergia à Mostarda</label>
-            </div>
-            
-            <hr class="separator">
+    mensagem.innerHTML = `⚠️ ATENÇÃO<br><span style="font-size:0.7em; font-weight:normal">Contém ingredientes de risco para você:</span><br><strong>${displayNames}</strong>`;
+    mensagem.style.color = "#cc4444";
+    icone.src = "img/nao_recomendado.jpg";
+    result.className = "result-box unsafe";
 
-            <h2>Escanear Alimento</h2>
-            
-            <div id="reader-container">
-                <div id="reader" class="escondido"></div>
-                <button id="cam-btn" onclick="toggleCamera()">📷 Ativar Câmera</button>
-            </div>
-            
-            <p class="small-text">ou digite o código:</p>
-            
-            <input type="number" id="manual-code" placeholder="Ex: 789...">
-            <button onclick="manualSearch()">🔍 Analisar</button>
+    // Sugestão baseada no primeiro risco encontrado
+    const mainRisk = detected[0].toLowerCase();
+    const suggestionText = specificProducts[mainRisk] || "produtos alternativos";
 
-            <div id="result-section" class="resultado escondido">
-                <h3 id="product-name"></h3>
-                
-                <div id="result" class="result-box">
-                    <p id="mensagem"></p>
-                    <img id="iconeAvaliacao" class="icone">
-                </div>
-                
-                <div id="suggestions" class="escondido">
-                </div>
-            </div>
-            
-        </div>
+    suggestionsDiv.classList.remove("escondido");
+    suggestionsDiv.innerHTML = `
+        <h4>💡 Alternativa:</h4>
+        <p>Procure por <strong>${suggestionText}</strong>.</p>
+        <a class="maps-link" target="_blank" href="https://www.google.com/maps/search/${suggestionText}+perto+de+mim">
+           🗺️ Encontrar lojas próximas
+        </a>
+    `;
+}
 
-        <div id="splash">
-            <img src="img/food.jpg" id="splash-logo">
-        </div>
-    </main>
+function showSafeResult() {
+    const result = document.getElementById("result");
+    const mensagem = document.getElementById("mensagem");
+    const icone = document.getElementById("iconeAvaliacao");
 
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="script.js"></script>
+    mensagem.innerText = "✅ PARECE SEGURO";
+    mensagem.style.color = "#1f4d2c";
+    icone.src = "img/recomendado.jpg";
+    result.className = "result-box safe";
+}
 
-    <div id="helpModal" class="modal-overlay escondido" onclick="closeHelp(event)">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeHelp(event)">&times;</span>
-            <h2>📖 Como usar o Food Guard</h2>
-            
-            <div class="step">
-                <div class="step-number">1</div>
-                <div class="step-text">
-                    <strong>Defina suas restrições</strong>
-                    <p>Marque as caixas (ex: Glúten, Leite) para informar o que você não pode comer.</p>
-                </div>
-            </div>
-    
-            <div class="step">
-                <div class="step-number">2</div>
-                <div class="step-text">
-                    <strong>Escaneie ou Digite</strong>
-                    <p>Clique em "Ativar Câmera" para ler o código de barras ou digite os números manualmente.</p>
-                </div>
-            </div>
-    
-            <div class="step">
-                <div class="step-number">3</div>
-                <div class="step-text">
-                    <strong>Analise o Resultado</strong>
-                    <p><span style="color:#1f4d2c; font-weight:bold;">Verde:</span> Seguro para você.<br>
-                    <span style="color:#cc4444; font-weight:bold;">Vermelho:</span> Contém ingredientes perigosos.</p>
-                </div>
-            </div>
-    
-            <button onclick="closeHelp(event)">Entendi!</button>
-        </div><div id="helpModal" class="modal-overlay escondido" onclick="closeHelp(event)">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeHelp(event)">&times;</span>
-        <h2>📖 Como usar o Food Guard</h2>
+function showProductNotFound() {
+    document.getElementById("mensagem").innerText = "❌ Produto não cadastrado.";
+    document.getElementById("iconeAvaliacao").src = "img/nao_recomendado.jpg";
+    document.getElementById("result").className = "result-box unsafe";
+}
+
+function showNetworkError() {
+    document.getElementById("mensagem").innerText = "📶 Sem conexão.";
+}
+
+function showInsufficientData() {
+    document.getElementById("mensagem").innerText = "❓ Sem dados de ingredientes.";
+    document.getElementById("result").className = "result-box unsafe";
+}
+
+// Splash Screen
+window.addEventListener("load", () => {
+    setTimeout(() => { document.getElementById("splash").style.display = "none"; }, 2500);
+});
+
+/* -----------------------------------------------
+   ❓ SISTEMA DE AJUDA (MODAL)
+--------------------------------------------------*/
+function openHelp() {
+    const modal = document.getElementById("helpModal");
+    modal.classList.remove("escondido");
+}
+
+function closeHelp(event) {
+    // Fecha se clicar no botão X, no botão "Entendi" ou fora da caixa branca
+    if (event.target.id === "helpModal" || 
+        event.target.className === "close-btn" || 
+        event.target.innerText === "Entendi!") {
         
-        <div class="step">
-            <div class="step-number">1</div>
-            <div class="step-text">
-                <strong>Defina suas restrições</strong>
-                <p>Marque as caixas (ex: Glúten, Leite) para informar o que você não pode comer.</p>
-            </div>
-        </div>
+        document.getElementById("helpModal").classList.add("escondido");
+    }
+}
 
-        <div class="step">
-            <div class="step-number">2</div>
-            <div class="step-text">
-                <strong>Escaneie ou Digite</strong>
-                <p>Clique em "Ativar Câmera" para ler o código de barras ou digite os números manualmente.</p>
-            </div>
-        </div>
-
-        <div class="step">
-            <div class="step-number">3</div>
-            <div class="step-text">
-                <strong>Analise o Resultado</strong>
-                <p><span style="color:#1f4d2c; font-weight:bold;">Verde:</span> Seguro para você.<br>
-                <span style="color:#cc4444; font-weight:bold;">Vermelho:</span> Contém ingredientes perigosos.</p>
-            </div>
-        </div>
-
-        <button onclick="closeHelp(event)">Entendi!</button>
-    </div>
-</body>
-</html>
+// Fecha o modal se o usuário apertar a tecla ESC
+document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") {
+        document.getElementById("helpModal").classList.add("escondido");
+    }
+});
