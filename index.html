@@ -1,1 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Guard - Saúde</title>
+    <link rel="stylesheet" href="style.css"> 
+    <link rel="icon" type="image/jpg" href="img/food.jpg"> 
+</head>
+<body>
 
+    <div id="sidebar">
+        <div class="sidebar-item" onclick="scrollToTop()">
+            <span class="sidebar-icon">🏠</span>
+            Início
+        </div>
+        <div class="sidebar-item" onclick="showRestrictions()">
+            <span class="sidebar-icon">⚠️</span>
+            Perfil
+        </div>
+        <div class="sidebar-item" onclick="openMapsSearch()">
+            <span class="sidebar-icon">🗺️</span>
+            Mapa
+        </div>
+        <div class="sidebar-item" onclick="openHelp()">
+            <span class="sidebar-icon">❓</span>
+            Ajuda
+        </div>
+    </div>
+    
+    <header></header> 
+
+    <main>
+        <div class="scanner-box" id="scannerBox">
+            <h2>Meu Perfil de Saúde 🩺</h2>
+            <p style="text-align:center; color:#666; font-size:0.9em; margin-bottom:15px;">Selecione suas condições:</p>
+            
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="health_condition" value="diabetes"> Diabetes</label>
+                <label><input type="checkbox" name="health_condition" value="hypertension"> Hipertensão</label>
+                <label><input type="checkbox" name="health_condition" value="celiac"> Doença Celíaca</label>
+                <label><input type="checkbox" name="health_condition" value="lactose"> Intolerância à Lactose</label>
+                <label><input type="checkbox" name="health_condition" value="egg_allergy"> Alergia à Ovo</label>
+                <label><input type="checkbox" name="health_condition" value="peanut_allergy"> Alergia à Amendoim</label>
+                <label><input type="checkbox" name="health_condition" value="seafood_allergy"> Alergia à Frutos do Mar</label>
+                <label><input type="checkbox" name="health_condition" value="nuts_allergy"> Alergia à Nozes</label>
+                <label><input type="checkbox" name="health_condition" value="soy_allergy"> Alergia à Soja</label>
+                <label><input type="checkbox" name="health_condition" value="mustard_allergy"> Alergia à Mostarda</label>
+            </div>
+            
+            <hr class="separator">
+
+            <h2>Escanear Alimento</h2>
+            
+            <div id="reader-container">
+                <div id="reader" class="escondido"></div>
+                <button id="cam-btn" onclick="toggleCamera()">📷 Ativar Câmera</button>
+            </div>
+            
+            <p class="small-text">ou digite o código:</p>
+            
+            <input type="number" id="manual-code" placeholder="Ex: 789...">
+            <button onclick="manualSearch()">🔍 Analisar</button>
+
+            <div id="result-section" class="resultado escondido">
+                <h3 id="product-name"></h3>
+                
+                <div id="result" class="result-box">
+                    <p id="mensagem"></p>
+                    <img id="iconeAvaliacao" class="icone">
+                </div>
+                
+                <div id="suggestions" class="escondido">
+                </div>
+            </div>
+            
+        </div>
+
+        <div id="splash">
+            <img src="img/food.jpg" id="splash-logo">
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="script.js"></script>
+
+    <div id="helpModal" class="modal-overlay escondido" onclick="closeHelp(event)">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeHelp(event)">&times;</span>
+            <h2>📖 Como usar o Food Guard</h2>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-text">
+                    <strong>Defina suas restrições</strong>
+                    <p>Marque as caixas (ex: Glúten, Leite) para informar o que você não pode comer.</p>
+                </div>
+            </div>
+    
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-text">
+                    <strong>Escaneie ou Digite</strong>
+                    <p>Clique em "Ativar Câmera" para ler o código de barras ou digite os números manualmente.</p>
+                </div>
+            </div>
+    
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-text">
+                    <strong>Analise o Resultado</strong>
+                    <p><span style="color:#1f4d2c; font-weight:bold;">Verde:</span> Seguro para você.<br>
+                    <span style="color:#cc4444; font-weight:bold;">Vermelho:</span> Contém ingredientes perigosos.</p>
+                </div>
+            </div>
+    
+            <button onclick="closeHelp(event)">Entendi!</button>
+        </div><div id="helpModal" class="modal-overlay escondido" onclick="closeHelp(event)">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeHelp(event)">&times;</span>
+        <h2>📖 Como usar o Food Guard</h2>
+        
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-text">
+                <strong>Defina suas restrições</strong>
+                <p>Marque as caixas (ex: Glúten, Leite) para informar o que você não pode comer.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-text">
+                <strong>Escaneie ou Digite</strong>
+                <p>Clique em "Ativar Câmera" para ler o código de barras ou digite os números manualmente.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-text">
+                <strong>Analise o Resultado</strong>
+                <p><span style="color:#1f4d2c; font-weight:bold;">Verde:</span> Seguro para você.<br>
+                <span style="color:#cc4444; font-weight:bold;">Vermelho:</span> Contém ingredientes perigosos.</p>
+            </div>
+        </div>
+
+        <button onclick="closeHelp(event)">Entendi!</button>
+    </div>
+</body>
+</html>
